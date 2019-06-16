@@ -16,12 +16,11 @@ open import Data.List.Relation.Unary.Any.Properties
   using (here-injective; there-injective)
 open import Data.List.Relation.Binary.Pointwise as Pw using (Pointwise; []; _∷_)
 open import Data.List.Relation.Binary.Sublist.Heterogeneous
-
 open import Data.Maybe.Relation.Unary.All as MAll using (nothing; just)
 open import Data.Nat using (ℕ; _≤_; _≥_); open ℕ; open _≤_
 import Data.Nat.Properties as ℕₚ
 open import Data.Product using (_×_; uncurry)
-
+open import Level using (Level)
 open import Function
 open import Function.Bijection   using (_⤖_; bijection)
 open import Function.Equivalence using (_⇔_ ; equivalence)
@@ -33,24 +32,34 @@ open import Relation.Unary as U using (Pred; _⊆_)
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality as P using (_≡_)
 
+private
+  variable
+    a b c d e p q r s t : Level
+    A : Set a
+    B : Set b
+    C : Set c
+    D : Set d
+
 ------------------------------------------------------------------------
 -- Injectivity of constructors
 
-module _ {a b r} {A : Set a} {B : Set b} {R : REL A B r} where
+module _ {R : REL A B r} {xs ys} {pxs qxs : Sublist R xs ys} where
 
-  ∷-injectiveˡ : ∀ {x y xs ys} {px qx : R x y} {pxs qxs : Sublist R xs ys} →
+  ∷-injectiveˡ : ∀ {x y} {px qx : R x y} →
                  (Sublist R (x ∷ xs) (y ∷ ys) ∋ px ∷ pxs) ≡ (qx ∷ qxs) → px ≡ qx
   ∷-injectiveˡ P.refl = P.refl
 
-  ∷-injectiveʳ : ∀ {x y xs ys} {px qx : R x y} {pxs qxs : Sublist R xs ys} →
+  ∷-injectiveʳ : ∀ {x y} {px qx : R x y} →
                  (Sublist R (x ∷ xs) (y ∷ ys) ∋ px ∷ pxs) ≡ (qx ∷ qxs) → pxs ≡ qxs
   ∷-injectiveʳ P.refl = P.refl
 
-  ∷ʳ-injective : ∀ {y xs ys} {pxs qxs : Sublist R xs ys} →
-                 (Sublist R xs (y ∷ ys) ∋ y ∷ʳ pxs) ≡ (y ∷ʳ qxs) → pxs ≡ qxs
+  ∷ʳ-injective : ∀ {y} → y ∷ʳ pxs ≡ y ∷ʳ qxs → pxs ≡ qxs
   ∷ʳ-injective P.refl = P.refl
 
-module _ {a b r} {A : Set a} {B : Set b} {R : REL A B r} where
+------------------------------------------------------------------------
+-- length
+
+module _ {R : REL A B r} where
 
   length-mono-≤ : ∀ {as bs} → Sublist R as bs → length as ≤ length bs
   length-mono-≤ []        = z≤n
@@ -59,6 +68,8 @@ module _ {a b r} {A : Set a} {B : Set b} {R : REL A B r} where
 
 ------------------------------------------------------------------------
 -- Conversion to and from Pointwise (proto-reflexivity)
+
+module _ {R : REL A B r} where
 
   fromPointwise : Pointwise R ⇒ Sublist R
   fromPointwise []       = []
@@ -79,7 +90,7 @@ module _ {a b r} {A : Set a} {B : Set b} {R : REL A B r} where
 -- obtain `f xs ⊆ xs` from `xs ⊆ ys → f xs ⊆ ys`. The other direction is
 -- only true if R is both reflexive and transitive.
 
-module _ {a b r} {A : Set a} {B : Set b} {R : REL A B r} where
+module _ {R : REL A B r} where
 
   tail-Sublist : ∀ {as bs} → Sublist R as bs →
                  MAll.All (λ as → Sublist R as bs) (tail as)
@@ -99,8 +110,7 @@ module _ {a b r} {A : Set a} {B : Set b} {R : REL A B r} where
   drop-Sublist (suc n) []        = []
   drop-Sublist (suc n) (r ∷ rs)  = _ ∷ʳ drop-Sublist n rs
 
-module _ {a b r p} {A : Set a} {B : Set b}
-         {R : REL A B r} {P : Pred A p} (P? : U.Decidable P) where
+module _ {R : REL A B r} {P : Pred A p} (P? : U.Decidable P) where
 
   takeWhile-Sublist : ∀ {as bs} → Sublist R as bs → Sublist R (takeWhile P? as) bs
   takeWhile-Sublist []        = []
@@ -129,10 +139,10 @@ module _ {a b r p} {A : Set a} {B : Set b}
 -- We write f⁺ for the proof that `xs ⊆ ys → f xs ⊆ f ys`
 -- and f⁻ for the one that `f xs ⊆ f ys → xs ⊆ ys`.
 
-module _ {a b r} {A : Set a} {B : Set b} {R : REL A B r} where
-
 ------------------------------------------------------------------------
 -- _∷_
+
+module _ {R : REL A B r} where
 
   ∷ˡ⁻ : ∀ {a as bs} → Sublist R (a ∷ as) bs → Sublist R as bs
   ∷ˡ⁻ (y ∷ʳ rs) = y ∷ʳ ∷ˡ⁻ rs
@@ -147,11 +157,10 @@ module _ {a b r} {A : Set a} {B : Set b} {R : REL A B r} where
   ∷⁻ (y ∷ʳ rs) = ∷ˡ⁻ rs
   ∷⁻ (x ∷  rs) = rs
 
-module _ {a b c d r} {A : Set a} {B : Set b} {C : Set c} {D : Set d}
-         {R : REL C D r} where
-
 ------------------------------------------------------------------------
 -- map
+
+module _ {R : REL C D r} where
 
   map⁺ : ∀ {as bs} (f : A → C) (g : B → D) →
          Sublist (λ a b → R (f a) (g b)) as bs →
@@ -163,15 +172,14 @@ module _ {a b c d r} {A : Set a} {B : Set b} {C : Set c} {D : Set d}
   map⁻ : ∀ {as bs} (f : A → C) (g : B → D) →
          Sublist R (List.map f as) (List.map g bs) →
          Sublist (λ a b → R (f a) (g b)) as bs
-  map⁻ {[]}     {bs}     f g rs        = minimum _
-  map⁻ {a ∷ as} {b ∷ bs} f g (_ ∷ʳ rs) = b ∷ʳ map⁻ f g rs
-  map⁻ {a ∷ as} {b ∷ bs} f g (r ∷ rs)  = r ∷ map⁻ f g rs
-
-
-module _ {a b r} {A : Set a} {B : Set b} {R : REL A B r} where
+  map⁻ {as = []}     {bs}     f g rs        = minimum _
+  map⁻ {as = a ∷ as} {b ∷ bs} f g (_ ∷ʳ rs) = b ∷ʳ map⁻ f g rs
+  map⁻ {as = a ∷ as} {b ∷ bs} f g (r ∷ rs)  = r ∷ map⁻ f g rs
 
 ------------------------------------------------------------------------
 -- _++_
+
+module _ {R : REL A B r} where
 
   ++⁺ : ∀ {as bs cs ds} → Sublist R as bs → Sublist R cs ds →
         Sublist R (as ++ cs) (bs ++ ds)
@@ -192,9 +200,10 @@ module _ {a b r} {A : Set a} {B : Set b} {R : REL A B r} where
   ++ʳ cs (y ∷ʳ rs) = y ∷ʳ ++ʳ cs rs
   ++ʳ cs (r ∷ rs)  = r ∷ ++ʳ cs rs
 
-
 ------------------------------------------------------------------------
 -- concat
+
+module _ {R : REL A B r} where
 
   concat⁺ : ∀ {ass bss} → Sublist (Sublist R) ass bss →
             Sublist R (concat ass) (concat bss)
@@ -204,6 +213,8 @@ module _ {a b r} {A : Set a} {B : Set b} {R : REL A B r} where
 
 ------------------------------------------------------------------------
 -- take / drop
+
+module _ {R : REL A B r} where
 
   take⁺ : ∀ {m n as bs} → m ≤ n → Pointwise R as bs →
           Sublist R (take m as) (take n bs)
@@ -226,13 +237,12 @@ module _ {a b r} {A : Set a} {B : Set b} {R : REL A B r} where
             Sublist R (drop m as) (drop m bs)
   drop⁺-⊆ m = drop⁺ (ℕₚ.≤-refl {m})
 
-module _ {a b r p q} {A : Set a} {B : Set b}
-         {R : REL A B r} {P : Pred A p} {Q : Pred B q}
+module _ {R : REL A B r} {P : Pred A p} {Q : Pred B q}
          (P? : U.Decidable P) (Q? : U.Decidable Q) where
 
-  ⊆-takeWhile-Sublist : ∀ {as bs} →
-    (∀ {a b} → R a b → P a → Q b) →
-    Pointwise R as bs → Sublist R (takeWhile P? as) (takeWhile Q? bs)
+  ⊆-takeWhile-Sublist : ∀ {as bs} → (∀ {a b} → R a b → P a → Q b) →
+                        Pointwise R as bs →
+                        Sublist R (takeWhile P? as) (takeWhile Q? bs)
   ⊆-takeWhile-Sublist rp⇒q [] = []
   ⊆-takeWhile-Sublist {a ∷ as} {b ∷ bs} rp⇒q (p ∷ ps) with P? a | Q? b
   ... | yes pa | yes qb = p ∷ ⊆-takeWhile-Sublist rp⇒q ps
@@ -240,9 +250,9 @@ module _ {a b r p q} {A : Set a} {B : Set b}
   ... | no ¬pa | yes qb = minimum _
   ... | no ¬pa | no ¬qb = []
 
-  ⊇-dropWhile-Sublist : ∀ {as bs} →
-    (∀ {a b} → R a b → Q b → P a) →
-    Pointwise R as bs → Sublist R (dropWhile P? as) (dropWhile Q? bs)
+  ⊇-dropWhile-Sublist : ∀ {as bs} → (∀ {a b} → R a b → Q b → P a) →
+                        Pointwise R as bs →
+                        Sublist R (dropWhile P? as) (dropWhile Q? bs)
   ⊇-dropWhile-Sublist rq⇒p [] = []
   ⊇-dropWhile-Sublist {a ∷ as} {b ∷ bs} rq⇒p (p ∷ ps) with P? a | Q? b
   ... | yes pa | yes qb = ⊇-dropWhile-Sublist rq⇒p ps
@@ -251,7 +261,8 @@ module _ {a b r p q} {A : Set a} {B : Set b}
   ... | no ¬pa | no ¬qb = p ∷ fromPointwise ps
 
   ⊆-filter-Sublist : ∀ {as bs} → (∀ {a b} → R a b → P a → Q b) →
-                     Sublist R as bs → Sublist R (filter P? as) (filter Q? bs)
+                     Sublist R as bs →
+                     Sublist R (filter P? as) (filter Q? bs)
   ⊆-filter-Sublist rp⇒q [] = []
   ⊆-filter-Sublist rp⇒q (y ∷ʳ rs) with Q? y
   ... | yes qb = y ∷ʳ ⊆-filter-Sublist rp⇒q rs
@@ -262,7 +273,7 @@ module _ {a b r p q} {A : Set a} {B : Set b}
   ... | no ¬pa | yes qb = _ ∷ʳ ⊆-filter-Sublist rp⇒q rs
   ... | no ¬pa | no ¬qb = ⊆-filter-Sublist rp⇒q rs
 
-module _ {a r p} {A : Set a} {R : Rel A r} {P : Pred A p} (P? : U.Decidable P) where
+module _ {R : Rel A r} {P : Pred A p} (P? : U.Decidable P) where
 
   takeWhile-filter : ∀ {as} → Pointwise R as as →
                      Sublist R (takeWhile P? as) (filter P? as)
@@ -281,7 +292,7 @@ module _ {a r p} {A : Set a} {R : Rel A r} {P : Pred A p} (P? : U.Decidable P) w
 ------------------------------------------------------------------------
 -- reverse
 
-module _ {a b r} {A : Set a} {B : Set b} {R : REL A B r} where
+module _ {R : REL A B r} where
 
   reverseAcc⁺ : ∀ {as bs cs ds} → Sublist R as bs → Sublist R cs ds →
                 Sublist R (reverseAcc cs as) (reverseAcc ds bs)
@@ -299,7 +310,7 @@ module _ {a b r} {A : Set a} {B : Set b} {R : REL A B r} where
 ------------------------------------------------------------------------
 -- Inversion lemmas
 
-module _ {a b r} {A : Set a} {B : Set b} {R : REL A B r} {a as b bs} where
+module _ {R : REL A B r} {a as b bs} where
 
   ∷⁻¹ : R a b → Sublist R as bs ⇔ Sublist R (a ∷ as) (b ∷ bs)
   ∷⁻¹ r = equivalence (r ∷_) ∷⁻
@@ -310,7 +321,7 @@ module _ {a b r} {A : Set a} {B : Set b} {R : REL A B r} {a as b bs} where
 ------------------------------------------------------------------------
 -- Irrelevant special case
 
-module _ {a b r} {A : Set a} {B : Set b} {R : REL A B r} where
+module _ {R : REL A B r} where
 
   Sublist-[]-irrelevant : U.Irrelevant (Sublist R [])
   Sublist-[]-irrelevant []       []        = P.refl
@@ -341,7 +352,7 @@ module _ {a b r} {A : Set a} {B : Set b} {R : REL A B r} where
 ------------------------------------------------------------------------
 -- Relational properties
 
-module _ {a r} {A : Set a} {R : Rel A r} where
+module _ {R : Rel A r} where
 
   reflexive : Reflexive R → _≡_ ⇒ Sublist R
   reflexive R-refl P.refl = fromPointwise (Pw.refl R-refl)
@@ -349,8 +360,7 @@ module _ {a r} {A : Set a} {R : Rel A r} where
   refl : Reflexive R → Reflexive (Sublist R)
   refl R-refl = reflexive R-refl P.refl
 
-module _ {a b c r s t} {A : Set a} {B : Set b} {C : Set c}
-         {R : REL A B r} {S : REL B C s} {T : REL A C t} where
+module _ {R : REL A B r} {S : REL B C s} {T : REL A C t} where
 
   trans : Trans R S T → Trans (Sublist R) (Sublist S) (Sublist T)
   trans rs⇒t []        []        = []
@@ -358,8 +368,7 @@ module _ {a b c r s t} {A : Set a} {B : Set b} {C : Set c}
   trans rs⇒t (y ∷ʳ rs) (s ∷ ss)  = _ ∷ʳ trans rs⇒t rs ss
   trans rs⇒t (r ∷ rs)  (s ∷ ss)  = rs⇒t r s ∷ trans rs⇒t rs ss
 
-module _ {a b r s e} {A : Set a} {B : Set b}
-         {R : REL A B r} {S : REL B A s} {E : REL A B e} where
+module _ {R : REL A B r} {S : REL B A s} {E : REL A B e} where
 
   open ℕₚ.≤-Reasoning
 
@@ -384,7 +393,7 @@ module _ {a b r s e} {A : Set a} {B : Set b}
     length xs        ≤⟨ length-mono-≤ rs ⟩
     length ys₁       ∎
 
-module _ {a b r} {A : Set a} {B : Set b} {R : REL A B r} (R? : Decidable R) where
+module _ {R : REL A B r} (R? : Decidable R) where
 
   sublist? : Decidable (Sublist R)
   sublist? []       ys       = yes (minimum ys)
@@ -393,7 +402,7 @@ module _ {a b r} {A : Set a} {B : Set b} {R : REL A B r} (R? : Decidable R) wher
   ... | yes r = Dec.map (∷⁻¹   r) (sublist? xs ys)
   ... | no ¬r = Dec.map (∷ʳ⁻¹ ¬r) (sublist? (x ∷ xs) ys)
 
-module _ {a e r} {A : Set a} {E : Rel A e} {R : Rel A r} where
+module _ {E : Rel A e} {R : Rel A r} where
 
   isPreorder : IsPreorder E R → IsPreorder (Pointwise E) (Sublist R)
   isPreorder ER-isPreorder = record

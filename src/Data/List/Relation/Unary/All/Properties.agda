@@ -20,6 +20,7 @@ open import Data.List.Relation.Unary.Any as Any using (Any; here; there)
 import Data.List.Relation.Binary.Equality.Setoid as ListEq using (_≋_; []; _∷_)
 open import Data.List.Relation.Binary.Pointwise using (Pointwise; []; _∷_)
 open import Data.List.Relation.Binary.Subset.Propositional using (_⊆_)
+import Data.List.Relation.Binary.Sublist.Propositional.Properties as Sublist
 open import Data.Maybe as Maybe using (Maybe; just; nothing)
 open import Data.Maybe.Relation.Unary.All as MAll using (just; nothing)
 open import Data.Nat using (zero; suc; z≤n; s≤s; _<_)
@@ -47,7 +48,7 @@ private
 ------------------------------------------------------------------------
 -- Lemmas relating Any, All and negation.
 
-module _ {P : A → Set p} where
+module _ {P : Pred A p} where
 
   ¬Any⇒All¬ : ∀ xs → ¬ Any P xs → All (¬_ ∘ P) xs
   ¬Any⇒All¬ []       ¬p = []
@@ -173,7 +174,7 @@ module _ {P : Pred A p} {Q : Pred A q} where
 ------------------------------------------------------------------------
 -- map
 
-module _ {P : B → Set p} {f : A → B} where
+module _ {P : Pred B p} {f : A → B} where
 
   map⁺ : ∀ {xs} → All (P ∘ f) xs → All P (map f xs)
   map⁺ []       = []
@@ -185,7 +186,7 @@ module _ {P : B → Set p} {f : A → B} where
 
 -- A variant of All.map.
 
-module _ {P : A → Set p} {Q : B → Set q} {f : A → B} where
+module _ {P : Pred A p} {Q : Pred B q} {f : A → B} where
 
   gmap : P ⋐ Q ∘ f → All P ⋐ All Q ∘ map f
   gmap g = map⁺ ∘ All.map g
@@ -193,7 +194,7 @@ module _ {P : A → Set p} {Q : B → Set q} {f : A → B} where
 ------------------------------------------------------------------------
 -- mapMaybe
 
-module _ (P : B → Set p) {f : A → Maybe B} where
+module _ (P : Pred B p) {f : A → Maybe B} where
 
   mapMaybe⁺ : ∀ {xs} → All (MAll.All P) (map f xs) → All P (mapMaybe f xs)
   mapMaybe⁺ {[]}     [] = []
@@ -205,7 +206,7 @@ module _ (P : B → Set p) {f : A → Maybe B} where
 ------------------------------------------------------------------------
 -- _++_
 
-module _ {P : A → Set p} where
+module _ {P : Pred A p} where
 
   ++⁺ : ∀ {xs ys} → All P xs → All P ys → All P (xs ++ ys)
   ++⁺ []         pys = pys
@@ -239,7 +240,7 @@ module _ {P : A → Set p} where
 ------------------------------------------------------------------------
 -- concat
 
-module _ {P : A → Set p} where
+module _ {P : Pred A p} where
 
   concat⁺ : ∀ {xss} → All (All P) xss → All P (concat xss)
   concat⁺ []           = []
@@ -255,19 +256,15 @@ module _ {P : A → Set p} where
 module _ {P : A → Set p} where
 
   drop⁺ : ∀ {xs} n → All P xs → All P (drop n xs)
-  drop⁺ zero    pxs        = pxs
-  drop⁺ (suc n) []         = []
-  drop⁺ (suc n) (px ∷ pxs) = drop⁺ n pxs
+  drop⁺ {xs} n = Sublist.All-resp-⊇ (Sublist.drop-⊆ n xs)
 
   take⁺ : ∀ {xs} n → All P xs → All P (take n xs)
-  take⁺ zero    pxs        = []
-  take⁺ (suc n) []         = []
-  take⁺ (suc n) (px ∷ pxs) = px ∷ take⁺ n pxs
+  take⁺ {xs} n = Sublist.All-resp-⊇ (Sublist.take-⊆ n xs)
 
 ------------------------------------------------------------------------
 -- applyUpTo
 
-module _ {P : A → Set p} where
+module _ {P : Pred A p} where
 
   applyUpTo⁺₁ : ∀ f n → (∀ {i} → i < n → P (f i)) → All P (applyUpTo f n)
   applyUpTo⁺₁ f zero    Pf = []
@@ -284,7 +281,7 @@ module _ {P : A → Set p} where
 ------------------------------------------------------------------------
 -- applyDownFrom
 
-module _ {P : A → Set p} where
+module _ {P : Pred A p} where
 
   applyDownFrom⁺₁ : ∀ f n → (∀ {i} → i < n → P (f i)) → All P (applyDownFrom f n)
   applyDownFrom⁺₁ f zero    Pf = []
@@ -296,7 +293,7 @@ module _ {P : A → Set p} where
 ------------------------------------------------------------------------
 -- tabulate
 
-module _ {P : A → Set p} where
+module _ {P : Pred A p} where
 
   tabulate⁺ : ∀ {n} {f : Fin n → A} →
               (∀ i → P (f i)) → All P (tabulate f)
@@ -311,7 +308,7 @@ module _ {P : A → Set p} where
 ------------------------------------------------------------------------
 -- remove
 
-module _ {P : A → Set p} {Q : A → Set q} where
+module _ {P : Pred A p} {Q : Pred A q} where
 
   ─⁺ : ∀ {xs} (p : Any P xs) → All Q xs → All Q (xs Any.─ p)
   ─⁺ (here px) (_ ∷ qs) = qs
@@ -324,7 +321,7 @@ module _ {P : A → Set p} {Q : A → Set q} where
 ------------------------------------------------------------------------
 -- filter
 
-module _ {P : A → Set p} (P? : Decidable P) where
+module _ {P : Pred A p} (P? : Decidable P) where
 
   all-filter : ∀ xs → All P (filter P? xs)
   all-filter []       = []
@@ -332,18 +329,15 @@ module _ {P : A → Set p} (P? : Decidable P) where
   ... | yes Px = Px ∷ all-filter xs
   ... | no  _  = all-filter xs
 
-module _ {P : A → Set p} {Q : A → Set q} (P? : Decidable P) where
+module _ {P : Pred A p} {Q : Pred A q} (P? : Decidable P) where
 
   filter⁺ : ∀ {xs} → All Q xs → All Q (filter P? xs)
-  filter⁺ {xs = _}     [] = []
-  filter⁺ {xs = x ∷ _} (Qx ∷ Qxs) with P? x
-  ... | no  _ = filter⁺ Qxs
-  ... | yes _ = Qx ∷ filter⁺ Qxs
+  filter⁺ {xs} = Sublist.All-resp-⊇ (Sublist.filter-⊆ P? xs)
 
 ------------------------------------------------------------------------
 -- zipWith
 
-module _ (P : C → Set p) (f : A → B → C) where
+module _ (P : Pred C p) (f : A → B → C) where
 
   zipWith⁺ : ∀ {xs ys} → Pointwise (λ x y → P (f x y)) xs ys →
              All P (zipWith f xs ys)
@@ -355,7 +349,7 @@ module _ (P : C → Set p) (f : A → B → C) where
 ------------------------------------------------------------------------
 -- singleton
 
-module _ {P : A → Set p} where
+module _ {P : Pred A p} where
 
   singleton⁻ : ∀ {x} → All P [ x ] → P x
   singleton⁻ (px ∷ []) = px
@@ -363,7 +357,7 @@ module _ {P : A → Set p} where
 ------------------------------------------------------------------------
 -- snoc
 
-module _ {P : A → Set p} {x xs} where
+module _ {P : Pred A p} {x xs} where
 
   ∷ʳ⁺ : All P xs → P x → All P (xs ∷ʳ x)
   ∷ʳ⁺ pxs px = ++⁺ pxs (px ∷ [])
@@ -374,7 +368,7 @@ module _ {P : A → Set p} {x xs} where
 ------------------------------------------------------------------------
 -- fromMaybe
 
-module _ {P : A → Set p} where
+module _ {P : Pred A p} where
 
   fromMaybe⁺ : ∀ {mx} → MAll.All P mx → All P (fromMaybe mx)
   fromMaybe⁺ (just px) = px ∷ []
@@ -387,7 +381,7 @@ module _ {P : A → Set p} where
 ------------------------------------------------------------------------
 -- replicate
 
-module _ {P : A → Set p} where
+module _ {P : Pred A p} where
 
   replicate⁺ : ∀ n {x} → P x → All P (replicate n x)
   replicate⁺ zero    px = []
@@ -399,7 +393,7 @@ module _ {P : A → Set p} where
 ------------------------------------------------------------------------
 -- inits
 
-module _ {P : A → Set p} where
+module _ {P : Pred A p} where
 
   inits⁺ : ∀ {xs} → All P xs → All (All P) (inits xs)
   inits⁺ []         = [] ∷ []
@@ -414,7 +408,7 @@ module _ {P : A → Set p} where
 ------------------------------------------------------------------------
 -- tails
 
-module _ {P : A → Set p} where
+module _ {P : Pred A p} where
 
   tails⁺ : ∀ {xs} → All P xs → All (All P) (tails xs)
   tails⁺ []             = [] ∷ []
@@ -441,7 +435,7 @@ module _ (p : A → Bool) where
 ------------------------------------------------------------------------
 -- All is anti-monotone.
 
-anti-mono : ∀ {P : A → Set p} {xs ys} → xs ⊆ ys → All P ys → All P xs
+anti-mono : ∀ {P : Pred A p} {xs ys} → xs ⊆ ys → All P ys → All P xs
 anti-mono xs⊆ys pys = All.tabulate (All.lookup pys ∘ xs⊆ys)
 
 all-anti-mono : ∀ (p : A → Bool) {xs ys} →

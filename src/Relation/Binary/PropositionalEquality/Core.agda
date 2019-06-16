@@ -19,7 +19,7 @@ open import Relation.Nullary using (¬_)
 
 private
   variable
-    a b ℓ : Level
+    a b ℓ p : Level
     A : Set a
     B : Set b
 
@@ -41,11 +41,11 @@ sym refl = refl
 trans : Transitive {A = A} _≡_
 trans refl eq = eq
 
-subst : Substitutive {A = A} _≡_ ℓ
-subst P refl p = p
-
 cong : ∀ (f : A → B) {x y} → x ≡ y → f x ≡ f y
 cong f refl = refl
+
+resp : ∀ (P : A → Set p) → P Respects _≡_
+resp P refl px = px
 
 respˡ : ∀ (∼ : Rel A ℓ) → ∼ Respectsˡ _≡_
 respˡ _∼_ refl x∼y = x∼y
@@ -55,6 +55,9 @@ respʳ _∼_ refl x∼y = x∼y
 
 resp₂ : ∀ (∼ : Rel A ℓ) → ∼ Respects₂ _≡_
 resp₂ _∼_ = respʳ _∼_ , respˡ _∼_
+
+subst : Substitutive {A = A} _≡_ ℓ
+subst = resp
 
 isEquivalence : IsEquivalence {A = A} _≡_
 isEquivalence = record

@@ -8,7 +8,8 @@
 
 open import Relation.Binary hiding (Decidable)
 
-module Data.List.Relation.Binary.Subset.Setoid.Properties where
+module Data.List.Relation.Binary.Subset.Setoid.Properties
+  {a ℓ} (S : Setoid a ℓ) where
 
 open import Data.Bool using (Bool; true; false)
 open import Data.List
@@ -21,60 +22,53 @@ open import Relation.Nullary using (¬_; yes; no)
 open import Relation.Unary using (Pred; Decidable)
 import Relation.Binary.Reasoning.Preorder as PreorderReasoning
 
-open Setoid using (Carrier)
+open Setoid S renaming (Carrier to A)
+open Equality S
+open Sublist S
+open Membership S
 
 ------------------------------------------------------------------------
 -- Relational properties
 
-module _ {a ℓ} (S : Setoid a ℓ) where
+⊆-reflexive : _≋_ ⇒ _⊆_
+⊆-reflexive xs≋ys = ∈-resp-≋ S xs≋ys
 
-  open Equality S
-  open Sublist S
-  open Membership S
+⊆-refl : Reflexive _⊆_
+⊆-refl x∈xs = x∈xs
 
-  ⊆-reflexive : _≋_ ⇒ _⊆_
-  ⊆-reflexive xs≋ys = ∈-resp-≋ S xs≋ys
+⊆-trans : Transitive _⊆_
+⊆-trans xs⊆ys ys⊆zs x∈xs = ys⊆zs (xs⊆ys x∈xs)
 
-  ⊆-refl : Reflexive _⊆_
-  ⊆-refl x∈xs = x∈xs
+⊆-isPreorder : IsPreorder _≋_ _⊆_
+⊆-isPreorder = record
+  { isEquivalence = ≋-isEquivalence
+  ; reflexive     = ⊆-reflexive
+  ; trans         = ⊆-trans
+  }
 
-  ⊆-trans : Transitive _⊆_
-  ⊆-trans xs⊆ys ys⊆zs x∈xs = ys⊆zs (xs⊆ys x∈xs)
+⊆-preorder : Preorder _ _ _
+⊆-preorder = record
+  { isPreorder = ⊆-isPreorder
+  }
 
-  ⊆-isPreorder : IsPreorder _≋_ _⊆_
-  ⊆-isPreorder = record
-    { isEquivalence = ≋-isEquivalence
-    ; reflexive     = ⊆-reflexive
-    ; trans         = ⊆-trans
-    }
+-- Reasoning over subsets
+module ⊆-Reasoning where
+  open PreorderReasoning ⊆-preorder public
+    renaming
+    ( _∼⟨_⟩_  to _⊆⟨_⟩_
+    ; _≈⟨_⟩_  to _≋⟨_⟩_
+    ; _≈˘⟨_⟩_ to _≋˘⟨_⟩_
+    ; _≈⟨⟩_   to _≋⟨⟩_
+    )
 
-  ⊆-preorder : Preorder _ _ _
-  ⊆-preorder = record
-    { isPreorder = ⊆-isPreorder
-    }
-
-  -- Reasoning over subsets
-  module ⊆-Reasoning where
-    open PreorderReasoning ⊆-preorder public
-      renaming
-      ( _∼⟨_⟩_  to _⊆⟨_⟩_
-      ; _≈⟨_⟩_  to _≋⟨_⟩_
-      ; _≈˘⟨_⟩_ to _≋˘⟨_⟩_
-      ; _≈⟨⟩_   to _≋⟨⟩_
-      )
-
-    infix 1 _∈⟨_⟩_
-    _∈⟨_⟩_ : ∀ x {xs ys} → x ∈ xs → xs IsRelatedTo ys → x ∈ ys
-    x ∈⟨ x∈xs ⟩ xs⊆ys = (begin xs⊆ys) x∈xs
+  infix 1 _∈⟨_⟩_
+  _∈⟨_⟩_ : ∀ x {xs ys} → x ∈ xs → xs IsRelatedTo ys → x ∈ ys
+  x ∈⟨ x∈xs ⟩ xs⊆ys = (begin xs⊆ys) x∈xs
 
 ------------------------------------------------------------------------
 -- filter
 
-module _ {a p ℓ} (S : Setoid a ℓ)
-         {P : Pred (Carrier S) p} (P? : Decidable P) where
-
-  open Setoid S renaming (Carrier to A)
-  open Sublist S
+module _ {p} {P : Pred A p} (P? : Decidable P) where
 
   filter⁺ : ∀ xs → filter P? xs ⊆ xs
   filter⁺ (x ∷ xs) y∈f[x∷xs] with P? x

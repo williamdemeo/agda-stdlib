@@ -17,40 +17,85 @@ import Data.List.Relation.Binary.Sublist.Setoid as SetoidSublist
 import Data.List.Relation.Binary.Sublist.Heterogeneous.Properties
   as HeteroProperties
 import Data.List.Membership.Setoid as SetoidMembership
-open import Data.List.Relation.Unary.Any using (Any)
+open import Data.List.Relation.Unary.All as All using (All; []; _∷_)
+open import Data.List.Relation.Unary.AllPairs using (AllPairs; []; _∷_)
+open import Data.List.Relation.Unary.Any using (Any; here; there)
+open import Data.List.Relation.Unary.Linked using (Linked)
+import Data.List.Relation.Unary.Unique.Setoid as SetoidUniqueness
+import Data.Maybe.Relation.Unary.All as Maybe
 open import Data.Nat using (_≤_; _≥_; z≤n; s≤s)
 import Data.Nat.Properties as ℕₚ
-import Data.Maybe.Relation.Unary.All as Maybe
+open import Data.Product using (_,_; proj₁; proj₂)
 open import Function
 open import Function.Bijection   using (_⤖_)
 open import Function.Equivalence using (_⇔_)
-
+open import Level using (Level)
+open import Relation.Binary using (Rel; _Respects_; _Respects₂_)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 open import Relation.Unary using (Pred; Decidable; Irrelevant)
 open import Relation.Nullary using (¬_)
 open import Relation.Nullary.Negation using (¬?)
 
-open Setoid S using (_≈_) renaming (Carrier to A)
+open Setoid S using (_≈_; sym; trans) renaming (Carrier to A)
 open SetoidEquality S using (_≋_; ≋-refl)
 open SetoidSublist S hiding (map)
 open SetoidMembership S using (_∈_)
+open SetoidUniqueness S using (Unique)
+
+private
+  variable
+    p r : Level
 
 ------------------------------------------------------------------------
 -- Injectivity of constructors
 ------------------------------------------------------------------------
 
-module _ {xs ys : List A} where
+module _ {xs ys : List A} {pxs qxs : xs ⊆ ys} where
 
-  ∷-injectiveˡ : ∀ {x y} {px qx : x ≈ y} {pxs qxs : xs ⊆ ys} →
-                 ((x ∷ xs) ⊆ (y ∷ ys) ∋ px ∷ pxs) ≡ (qx ∷ qxs) → px ≡ qx
-  ∷-injectiveˡ refl = refl
+  ∷-injectiveˡ : ∀ {x y} {px qx : x ≈ y} → px ∷ pxs ≡ qx ∷ qxs → px ≡ qx
+  ∷-injectiveˡ = HeteroProperties.∷-injectiveˡ
 
-  ∷-injectiveʳ : ∀ {x y} {px qx : x ≈ y} {pxs qxs : xs ⊆ ys} →
-                 ((x ∷ xs) ⊆ (y ∷ ys) ∋ px ∷ pxs) ≡ (qx ∷ qxs) → pxs ≡ qxs
-  ∷-injectiveʳ refl = refl
+  ∷-injectiveʳ : ∀ {x y} {px qx : x ≈ y} → px ∷ pxs ≡ qx ∷ qxs → pxs ≡ qxs
+  ∷-injectiveʳ = HeteroProperties.∷-injectiveʳ
 
-  ∷ʳ-injective : ∀ {y} {pxs qxs : xs ⊆ ys} → y ∷ʳ pxs ≡ y ∷ʳ qxs → pxs ≡ qxs
-  ∷ʳ-injective refl = refl
+  ∷ʳ-injective : ∀ {y} → y ∷ʳ pxs ≡ y ∷ʳ qxs → pxs ≡ qxs
+  ∷ʳ-injective = HeteroProperties.∷ʳ-injective
+
+------------------------------------------------------------------------
+-- Predicates preserved by _⊆_
+------------------------------------------------------------------------
+
+module _ {P : Pred A p} (P-resp-≈ : P Respects _≈_) where
+
+  Any-resp-⊆ : (Any P) Respects _⊆_
+  Any-resp-⊆ (y   ∷ʳ xs⊆ys) pxs         = there (Any-resp-⊆ xs⊆ys pxs)
+  Any-resp-⊆ (x≈y ∷  xs⊆ys) (here  px)  = here (P-resp-≈ x≈y px)
+  Any-resp-⊆ (x≈y ∷  xs⊆ys) (there pxs) = there (Any-resp-⊆ xs⊆ys pxs)
+
+  All-resp-⊇ : (All P) Respects _⊇_
+  All-resp-⊇ []             pys        = pys
+  All-resp-⊇ (y   ∷ʳ xs⊆ys) (_  ∷ pys) = All-resp-⊇ xs⊆ys pys
+  All-resp-⊇ (x≈y ∷  xs⊆ys) (py ∷ pys) =
+    P-resp-≈ (sym x≈y) py ∷ (All-resp-⊇ xs⊆ys pys)
+
+module _ {R : Rel A r} (R-resp-≈ : R Respects₂ _≈_) where
+
+  AllPairs-resp-⊇ : (AllPairs R) Respects _⊇_
+  AllPairs-resp-⊇ []             pys        = pys
+  AllPairs-resp-⊇ (y   ∷ʳ xs⊆ys) (_  ∷ pys) = AllPairs-resp-⊇ xs⊆ys pys
+  AllPairs-resp-⊇ (x≈y ∷  xs⊆ys) (py ∷ pys) =
+    All-resp-⊇ (proj₁ R-resp-≈) xs⊆ys
+      (All.map (proj₂ R-resp-≈ (sym x≈y)) py) ∷
+    AllPairs-resp-⊇ xs⊆ys pys
+
+∈-resp-⊆ : ∀ {v} → (v ∈_) Respects _⊆_
+∈-resp-⊆ = Any-resp-⊆ (flip trans)
+
+-- This should be simplified using ≉-resp-≈ once #783 is merged
+Unique-resp-⊇ : Unique Respects _⊇_
+Unique-resp-⊇ = AllPairs-resp-⊇
+  ((λ z≈y x≉z x≈y → x≉z (trans x≈y (sym z≈y))) ,
+  (λ x≈y x≉z y≈z → x≉z (trans x≈y y≈z)))
 
 ------------------------------------------------------------------------
 -- Various functions' outputs are sublists

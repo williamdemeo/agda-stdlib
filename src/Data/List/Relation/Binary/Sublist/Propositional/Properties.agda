@@ -6,39 +6,66 @@
 
 {-# OPTIONS --without-K --safe #-}
 
-module Data.List.Relation.Binary.Sublist.Propositional.Properties {a} {A : Set a} where
+module Data.List.Relation.Binary.Sublist.Propositional.Properties
+  {a} {A : Set a} where
 
 open import Data.List using (map)
-open import Data.List.Relation.Unary.All using (All; []; _∷_)
+open import Data.List.Relation.Unary.All using (All)
+open import Data.List.Relation.Unary.AllPairs using (AllPairs)
 open import Data.List.Relation.Unary.Any using (Any; here; there)
-open import Data.List.Relation.Unary.Any.Properties using (here-injective; there-injective)
+open import Data.List.Relation.Unary.Any.Properties
+  using (here-injective; there-injective)
 open import Data.List.Relation.Binary.Sublist.Propositional
   hiding (map)
 import Data.List.Relation.Binary.Sublist.Setoid.Properties
   as SetoidProperties
+open import Data.Product using (_,_)
 open import Function
-open import Relation.Binary using (_Respects_)
+open import Level using (Level)
+open import Relation.Binary using (Rel; _Respects_; _Respects₂_)
 open import Relation.Binary.PropositionalEquality as P hiding ([_])
 open import Relation.Unary as U using (Pred)
 
-------------------------------------------------------------------------
--- Re-exporting setoid properties
+private
+  variable
+    b p r : Level
 
-open SetoidProperties (P.setoid A) public
-  hiding (map⁺)
+------------------------------------------------------------------------
+-- Re-exporting most setoid properties as is
+
+private module Setoid = SetoidProperties (P.setoid A)
+
+open Setoid public
+  hiding (map⁺; Any-resp-⊆; All-resp-⊇; AllPairs-resp-⊇)
+
+------------------------------------------------------------------------
+-- Relationships to other predicates
+
+module _ {P : Pred A p} where
+
+  Any-resp-⊆ : (Any P) Respects _⊆_
+  Any-resp-⊆ = Setoid.Any-resp-⊆ (resp P)
+
+  All-resp-⊇ : (All P) Respects _⊇_
+  All-resp-⊇ = Setoid.All-resp-⊇ (resp P)
+
+module _ {R : Rel A r} where
+
+  AllPairs-resp-⊇ : (AllPairs R) Respects _⊇_
+  AllPairs-resp-⊇ = Setoid.AllPairs-resp-⊇ (resp₂ R)
 
 ------------------------------------------------------------------------
 -- map
 
-module _ {b} {B : Set b} where
+module _ {B : Set b} where
 
   map⁺ : ∀ {as bs} (f : A → B) → as ⊆ bs → map f as ⊆ map f bs
-  map⁺ f = SetoidProperties.map⁺ (setoid A) (setoid B) (cong f)
+  map⁺ f = Setoid.map⁺ (setoid B) (cong f)
 
 ------------------------------------------------------------------------
 -- The `lookup` function induced by a proof that `xs ⊆ ys` is injective
 
-module _ {p} {P : Pred A p} where
+module _ {P : Pred A p} where
 
   lookup-injective : ∀ {xs ys} {p : xs ⊆ ys} {v w : Any P xs} →
                      lookup p v ≡ lookup p w → v ≡ w
@@ -50,14 +77,17 @@ module _ {p} {P : Pred A p} where
   lookup-injective {p = _ ∷ _}    {there v} {there w} =
     cong there ∘′ lookup-injective ∘′ there-injective
 
+
+
+
 ------------------------------------------------------------------------
--- Relationships to other predicates
+-- DEPRECATED NAMES
+------------------------------------------------------------------------
+-- Please use the new names as continuing support for the old names is
+-- not guaranteed.
 
-module _ {ℓ} {P : Pred A ℓ} where
-  All-resp-⊆ : (All P) Respects (flip _⊆_)
-  All-resp-⊆ []          []       = []
-  All-resp-⊆ (_    ∷ʳ p) (_ ∷ xs) = All-resp-⊆ p xs
-  All-resp-⊆ (refl ∷  p) (x ∷ xs) = x ∷ All-resp-⊆ p xs
-
-  Any-resp-⊆ : (Any P) Respects _⊆_
-  Any-resp-⊆ = lookup
+All-resp-⊆ = All-resp-⊇
+{-# WARNING_ON_USAGE All-resp-⊆
+"Warning: All-resp-⊆ was deprecated in v1.2.
+Please use All-resp-⊇ instead."
+#-}

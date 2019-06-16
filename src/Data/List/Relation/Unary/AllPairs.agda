@@ -6,19 +6,23 @@
 
 {-# OPTIONS --without-K --safe #-}
 
-module Data.List.Relation.Unary.AllPairs where
+module Data.List.Relation.Unary.AllPairs {a} {A : Set a} where
 
 open import Data.List using (List; []; _∷_)
 open import Data.List.Relation.Unary.All as All using (All; []; _∷_)
 open import Data.Product as Prod using (_,_; _×_)
 open import Function using (id; _∘_)
-open import Level using (_⊔_)
+open import Level using (Level; _⊔_)
 open import Relation.Binary as B using (Rel; _⇒_)
 open import Relation.Binary.Construct.Intersection renaming (_∩_ to _∩ᵇ_)
 open import Relation.Binary.PropositionalEquality
 open import Relation.Unary as U renaming (_∩_ to _∩ᵘ_) hiding (_⇒_)
 open import Relation.Nullary using (yes; no)
 import Relation.Nullary.Decidable as Dec
+
+private
+  variable
+    p q r ℓ : Level
 
 ------------------------------------------------------------------------
 -- Definition
@@ -28,14 +32,14 @@ import Relation.Nullary.Decidable as Dec
 
 infixr 5 _∷_
 
-data AllPairs {a ℓ} {A : Set a} (R : Rel A ℓ) : List A → Set (a ⊔ ℓ) where
+data AllPairs (R : Rel A ℓ) : List A → Set (a ⊔ ℓ) where
   []  : AllPairs R []
   _∷_ : ∀ {x xs} → All (R x) xs → AllPairs R xs → AllPairs R (x ∷ xs)
 
 ------------------------------------------------------------------------
 -- Operations
 
-module _ {a ℓ} {A : Set a} {R : Rel A ℓ} where
+module _ {R : Rel A ℓ} where
 
   head : ∀ {x xs} → AllPairs R (x ∷ xs) → All (R x) xs
   head (px ∷ pxs) = px
@@ -43,13 +47,13 @@ module _ {a ℓ} {A : Set a} {R : Rel A ℓ} where
   tail : ∀ {x xs} → AllPairs R (x ∷ xs) → AllPairs R xs
   tail (px ∷ pxs) = pxs
 
-module _ {a p q} {A : Set a} {R : Rel A p} {S : Rel A q} where
+module _ {R : Rel A p} {S : Rel A q} where
 
   map : R ⇒ S → AllPairs R ⊆ AllPairs S
   map ~₁⇒~₂ [] = []
   map ~₁⇒~₂ (x~xs ∷ pxs) = All.map ~₁⇒~₂ x~xs ∷ (map ~₁⇒~₂ pxs)
 
-module _ {a p q r} {A : Set a} {P : Rel A p} {Q : Rel A q} {R : Rel A r} where
+module _ {P : Rel A p} {Q : Rel A q} {R : Rel A r} where
 
   zipWith : P ∩ᵇ Q ⇒ R → AllPairs P ∩ᵘ AllPairs Q ⊆ AllPairs R
   zipWith f ([] , [])             = []
@@ -59,7 +63,7 @@ module _ {a p q r} {A : Set a} {P : Rel A p} {Q : Rel A q} {R : Rel A r} where
   unzipWith f []         = [] , []
   unzipWith f (rx ∷ rxs) = Prod.zip _∷_ _∷_ (All.unzipWith f rx) (unzipWith f rxs)
 
-module _ {a p q} {A : Set a} {P : Rel A p} {Q : Rel A q} where
+module _ {P : Rel A p} {Q : Rel A q} where
 
   zip : AllPairs P ∩ᵘ AllPairs Q ⊆ AllPairs (P ∩ᵇ Q)
   zip = zipWith id
@@ -70,7 +74,7 @@ module _ {a p q} {A : Set a} {P : Rel A p} {Q : Rel A q} where
 ------------------------------------------------------------------------
 -- Properties of predicates preserved by AllPairs
 
-module _ {a ℓ} {A : Set a} {R : Rel A ℓ} where
+module _ {R : Rel A ℓ} where
 
   allPairs? : B.Decidable R → U.Decidable (AllPairs R)
   allPairs? R? []       = yes []

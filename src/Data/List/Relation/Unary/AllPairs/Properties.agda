@@ -11,23 +11,32 @@ module Data.List.Relation.Unary.AllPairs.Properties where
 open import Data.List hiding (any)
 open import Data.List.Relation.Unary.All as All using (All; []; _∷_)
 import Data.List.Relation.Unary.All.Properties as All
-open import Data.List.Relation.Unary.AllPairs as AllPairs using (AllPairs; []; _∷_)
+open import Data.List.Relation.Unary.AllPairs as AllPairs
+  using (AllPairs; []; _∷_)
+import Data.List.Relation.Binary.Sublist.Propositional.Properties as Subset
 open import Data.Fin using (Fin)
 open import Data.Fin.Properties using (suc-injective)
 open import Data.Nat using (zero; suc; _<_; z≤n; s≤s)
 open import Data.Nat.Properties using (≤-refl; ≤-step)
+open import Level using (Level)
 open import Function using (_∘_; flip)
 open import Relation.Binary using (Rel; DecSetoid)
 open import Relation.Binary.PropositionalEquality using (_≢_)
 open import Relation.Unary using (Pred; Decidable)
 open import Relation.Nullary using (yes; no)
 
+private
+  variable
+    a b p ℓ : Level
+    A : Set a
+    B : Set b
+
 ------------------------------------------------------------------------
 -- Introduction (⁺) and elimination (⁻) rules for list operations
 ------------------------------------------------------------------------
 -- map
 
-module _ {a b ℓ} {A : Set a} {B : Set b} {R : Rel A ℓ} {f : B → A} where
+module _ {R : Rel A ℓ} {f : B → A} where
 
   map⁺ : ∀ {xs} → AllPairs (λ x y → R (f x) (f y)) xs →
          AllPairs R (map f xs)
@@ -37,7 +46,7 @@ module _ {a b ℓ} {A : Set a} {B : Set b} {R : Rel A ℓ} {f : B → A} where
 ------------------------------------------------------------------------
 -- ++
 
-module _ {a ℓ} {A : Set a} {R : Rel A ℓ} where
+module _ {R : Rel A ℓ} where
 
   ++⁺ : ∀ {xs ys} → AllPairs R xs → AllPairs R ys →
         All (λ x → All (R x) ys) xs → AllPairs R (xs ++ ys)
@@ -47,7 +56,7 @@ module _ {a ℓ} {A : Set a} {R : Rel A ℓ} where
 ------------------------------------------------------------------------
 -- concat
 
-module _ {a ℓ} {A : Set a} {R : Rel A ℓ} where
+module _ {R : Rel A ℓ} where
 
   concat⁺ : ∀ {xss} → All (AllPairs R) xss →
             AllPairs (λ xs ys → All (λ x → All (R x) ys) xs) xss →
@@ -59,24 +68,21 @@ module _ {a ℓ} {A : Set a} {R : Rel A ℓ} where
 ------------------------------------------------------------------------
 -- take and drop
 
-module _ {a ℓ} {A : Set a} {R : Rel A ℓ} where
+module _ {R : Rel A ℓ} where
 
   take⁺ : ∀ {xs} n → AllPairs R xs → AllPairs R (take n xs)
-  take⁺ zero    pxs        = []
-  take⁺ (suc n) []         = []
-  take⁺ (suc n) (px ∷ pxs) = All.take⁺ n px ∷ take⁺ n pxs
+  take⁺ {xs} n = Subset.AllPairs-resp-⊇ (Subset.take-⊆ n xs)
 
   drop⁺ : ∀ {xs} n → AllPairs R xs → AllPairs R (drop n xs)
-  drop⁺ zero    pxs       = pxs
-  drop⁺ (suc n) []        = []
-  drop⁺ (suc n) (_ ∷ pxs) = drop⁺ n pxs
+  drop⁺ {xs} n = Subset.AllPairs-resp-⊇ (Subset.drop-⊆ n xs)
 
 ------------------------------------------------------------------------
 -- applyUpTo
 
-module _ {a ℓ} {A : Set a} {R : Rel A ℓ} where
+module _ {R : Rel A ℓ} where
 
-  applyUpTo⁺₁ : ∀ f n → (∀ {i j} → i < j → j < n → R (f i) (f j)) → AllPairs R (applyUpTo f n)
+  applyUpTo⁺₁ : ∀ f n → (∀ {i j} → i < j → j < n → R (f i) (f j)) →
+                AllPairs R (applyUpTo f n)
   applyUpTo⁺₁ f zero    Rf = []
   applyUpTo⁺₁ f (suc n) Rf =
     All.applyUpTo⁺₁ _ n (Rf (s≤s z≤n) ∘ s≤s) ∷
@@ -88,7 +94,7 @@ module _ {a ℓ} {A : Set a} {R : Rel A ℓ} where
 ------------------------------------------------------------------------
 -- applyDownFrom
 
-module _ {a ℓ} {A : Set a} {R : Rel A ℓ} where
+module _ {R : Rel A ℓ} where
 
   applyDownFrom⁺₁ : ∀ f n → (∀ {i j} → j < i → i < n → R (f i) (f j)) →
                     AllPairs R (applyDownFrom f n)
@@ -103,7 +109,7 @@ module _ {a ℓ} {A : Set a} {R : Rel A ℓ} where
 ------------------------------------------------------------------------
 -- tabulate
 
-module _ {a ℓ} {A : Set a} {R : Rel A ℓ} where
+module _ {R : Rel A ℓ} where
 
   tabulate⁺ : ∀ {n} {f : Fin n → A} → (∀ {i j} → i ≢ j → R (f i) (f j)) →
               AllPairs R (tabulate f)
@@ -115,11 +121,7 @@ module _ {a ℓ} {A : Set a} {R : Rel A ℓ} where
 ------------------------------------------------------------------------
 -- filter
 
-module _ {a ℓ p} {A : Set a} {R : Rel A ℓ}
-         {P : Pred A p} (P? : Decidable P) where
+module _ {R : Rel A ℓ} {P : Pred A p} (P? : Decidable P) where
 
   filter⁺ : ∀ {xs} → AllPairs R xs → AllPairs R (filter P? xs)
-  filter⁺ {_}      []           = []
-  filter⁺ {x ∷ xs} (x∉xs ∷ xs!) with P? x
-  ... | no  _ = filter⁺ xs!
-  ... | yes _ = All.filter⁺ P? x∉xs ∷ filter⁺ xs!
+  filter⁺ {xs} = Subset.AllPairs-resp-⊇ (Subset.filter-⊆ P? xs)

@@ -8,8 +8,7 @@
 
 open import Relation.Binary hiding (Decidable)
 
-module Data.List.Relation.Binary.Subset.Propositional.Properties
-  where
+module Data.List.Relation.Binary.Subset.Propositional.Properties where
 
 open import Category.Monad
 open import Data.Bool.Base using (Bool; true; false; T)
@@ -27,8 +26,9 @@ open import Function using (_∘_; _∘′_; id; _$_)
 open import Function.Equality using (_⟨$⟩_)
 open import Function.Inverse as Inv using (_↔_; module Inverse)
 open import Function.Equivalence using (module Equivalence)
+open import Level using (Level)
 open import Relation.Nullary using (¬_; yes; no)
-open import Relation.Unary using (Decidable)
+open import Relation.Unary using (Decidable; Pred)
 open import Relation.Binary using (_⇒_)
 open import Relation.Binary.PropositionalEquality
   using (_≡_; _≗_; isEquivalence; refl; setoid; module ≡-Reasoning)
@@ -37,21 +37,25 @@ import Relation.Binary.PreorderReasoning as PreorderReasoning
 private
   open module ListMonad {ℓ} = RawMonad (monad {ℓ = ℓ})
 
+private
+  variable
+    a b p : Level
+    A : Set a
+    B : Set b
+
 ------------------------------------------------------------------------
 -- Relational properties
 
-module _ {a} {A : Set a} where
+⊆-reflexive : _≡_ {A = List A} ⇒ _⊆_
+⊆-reflexive refl = id
 
-  ⊆-reflexive : _≡_ ⇒ (_⊆_ {A = A})
-  ⊆-reflexive refl = id
+⊆-refl : Reflexive {A = List A} _⊆_
+⊆-refl x∈xs = x∈xs
 
-  ⊆-refl : Reflexive {A = List A} _⊆_
-  ⊆-refl x∈xs = x∈xs
+⊆-trans : Transitive {A = List A} _⊆_
+⊆-trans xs⊆ys ys⊆zs x∈xs = ys⊆zs (xs⊆ys x∈xs)
 
-  ⊆-trans : Transitive {A = List A} (_⊆_ {A = A})
-  ⊆-trans xs⊆ys ys⊆zs x∈xs = ys⊆zs (xs⊆ys x∈xs)
-
-module _ {a} (A : Set a) where
+module _ (A : Set a) where
 
   ⊆-isPreorder : IsPreorder {A = List A} _≡_ _⊆_
   ⊆-isPreorder = record
@@ -68,7 +72,7 @@ module _ {a} (A : Set a) where
 ------------------------------------------------------------------------
 -- Reasoning over subsets
 
-module ⊆-Reasoning {a} (A : Set a) where
+module ⊆-Reasoning (A : Set a) where
   open Setoidₚ.⊆-Reasoning (setoid A) public
     hiding (_≋⟨_⟩_; _≋˘⟨_⟩_; _≋⟨⟩_)
 
@@ -77,7 +81,7 @@ module ⊆-Reasoning {a} (A : Set a) where
 ------------------------------------------------------------------------
 -- Any
 
-module _ {a p} {A : Set a} {P : A → Set p} {xs ys : List A} where
+module _ {P : Pred A p} {xs ys : List A} where
 
   mono : xs ⊆ ys → Any P xs → Any P ys
   mono xs⊆ys =
@@ -85,11 +89,10 @@ module _ {a p} {A : Set a} {P : A → Set p} {xs ys : List A} where
     Prod.map id (Prod.map xs⊆ys id) ∘
     _⟨$⟩_ (Inverse.from Any↔)
 
-
 ------------------------------------------------------------------------
 -- map
 
-module _ {a b} {A : Set a} {B : Set b} (f : A → B) {xs ys} where
+module _ (f : A → B) {xs ys} where
 
   map-mono : xs ⊆ ys → map f xs ⊆ map f ys
   map-mono xs⊆ys =
@@ -100,7 +103,7 @@ module _ {a b} {A : Set a} {B : Set b} (f : A → B) {xs ys} where
 ------------------------------------------------------------------------
 -- _++_
 
-module _ {a} {A : Set a} {xs₁ xs₂ ys₁ ys₂ : List A} where
+module _ {xs₁ xs₂ ys₁ ys₂ : List A} where
 
   _++-mono_ : xs₁ ⊆ ys₁ → xs₂ ⊆ ys₂ → xs₁ ++ xs₂ ⊆ ys₁ ++ ys₂
   _++-mono_ xs₁⊆ys₁ xs₂⊆ys₂ =
@@ -111,13 +114,13 @@ module _ {a} {A : Set a} {xs₁ xs₂ ys₁ ys₂ : List A} where
 ------------------------------------------------------------------------
 -- concat
 
-module _ {a} {A : Set a} {xss yss : List (List A)} where
+module _ {xss yss : List (List A)} where
 
   concat-mono : xss ⊆ yss → concat xss ⊆ concat yss
   concat-mono xss⊆yss =
-    _⟨$⟩_ (Inverse.to $ concat-∈↔ {a = a}) ∘
-    Prod.map id (Prod.map id xss⊆yss) ∘
-    _⟨$⟩_ (Inverse.from $ concat-∈↔ {a = a})
+    _⟨$⟩_ (Inverse.to $ concat-∈↔) ∘
+    Prod.map₂ (Prod.map₂ xss⊆yss) ∘
+    _⟨$⟩_ (Inverse.from $ concat-∈↔)
 
 ------------------------------------------------------------------------
 -- _>>=_
@@ -126,9 +129,9 @@ module _ {ℓ} {A B : Set ℓ} (f g : A → List B) {xs ys} where
 
   >>=-mono : xs ⊆ ys → (∀ {x} → f x ⊆ g x) → (xs >>= f) ⊆ (ys >>= g)
   >>=-mono xs⊆ys f⊆g =
-    _⟨$⟩_ (Inverse.to $ >>=-∈↔ {ℓ = ℓ}) ∘
-    Prod.map id (Prod.map xs⊆ys f⊆g) ∘
-    _⟨$⟩_ (Inverse.from $ >>=-∈↔ {ℓ = ℓ})
+    _⟨$⟩_ (Inverse.to $ >>=-∈↔) ∘
+    Prod.map₂ (Prod.map xs⊆ys f⊆g) ∘
+    _⟨$⟩_ (Inverse.from $ >>=-∈↔)
 
 ------------------------------------------------------------------------
 -- _⊛_
@@ -138,7 +141,7 @@ module _ {ℓ} {A B : Set ℓ} {fs gs : List (A → B)} {xs ys : List A} where
   _⊛-mono_ : fs ⊆ gs → xs ⊆ ys → (fs ⊛ xs) ⊆ (gs ⊛ ys)
   _⊛-mono_ fs⊆gs xs⊆ys =
     _⟨$⟩_ (Inverse.to $ ⊛-∈↔ gs) ∘
-    Prod.map id (Prod.map id (Prod.map fs⊆gs (Prod.map xs⊆ys id))) ∘
+    Prod.map₂ (Prod.map₂ (Prod.map fs⊆gs (Prod.map₁ xs⊆ys))) ∘
     _⟨$⟩_ (Inverse.from $ ⊛-∈↔ fs)
 
 ------------------------------------------------------------------------
@@ -148,14 +151,14 @@ module _ {ℓ} {A B : Set ℓ} {xs₁ ys₁ : List A} {xs₂ ys₂ : List B} whe
 
   _⊗-mono_ : xs₁ ⊆ ys₁ → xs₂ ⊆ ys₂ → (xs₁ ⊗ xs₂) ⊆ (ys₁ ⊗ ys₂)
   xs₁⊆ys₁ ⊗-mono xs₂⊆ys₂ =
-    _⟨$⟩_ (Inverse.to $ ⊗-∈↔ {ℓ = ℓ}) ∘
+    _⟨$⟩_ (Inverse.to $ ⊗-∈↔) ∘
     Prod.map xs₁⊆ys₁ xs₂⊆ys₂ ∘
-    _⟨$⟩_ (Inverse.from $ ⊗-∈↔ {ℓ = ℓ})
+    _⟨$⟩_ (Inverse.from $ ⊗-∈↔)
 
 ------------------------------------------------------------------------
 -- any
 
-module _ {a} {A : Set a} (p : A → Bool) {xs ys} where
+module _ (p : A → Bool) {xs ys} where
 
   any-mono : xs ⊆ ys → T (any p xs) → T (any p ys)
   any-mono xs⊆ys =
@@ -166,15 +169,14 @@ module _ {a} {A : Set a} (p : A → Bool) {xs ys} where
 ------------------------------------------------------------------------
 -- map-with-∈
 
-module _ {a b} {A : Set a} {B : Set b}
-         {xs : List A} {f : ∀ {x} → x ∈ xs → B}
+module _ {xs : List A} {f : ∀ {x} → x ∈ xs → B}
          {ys : List A} {g : ∀ {x} → x ∈ ys → B} where
 
   map-with-∈-mono : (xs⊆ys : xs ⊆ ys) → (∀ {x} → f {x} ≗ g ∘ xs⊆ys) →
                     map-with-∈ xs f ⊆ map-with-∈ ys g
   map-with-∈-mono xs⊆ys f≈g {x} =
     _⟨$⟩_ (Inverse.to map-with-∈↔) ∘
-    Prod.map id (Prod.map xs⊆ys (λ {x∈xs} x≡fx∈xs → begin
+    Prod.map₂ (Prod.map xs⊆ys (λ {x∈xs} x≡fx∈xs → begin
       x               ≡⟨ x≡fx∈xs ⟩
       f x∈xs          ≡⟨ f≈g x∈xs ⟩
       g (xs⊆ys x∈xs)  ∎)) ∘
@@ -184,7 +186,7 @@ module _ {a b} {A : Set a} {B : Set b}
 ------------------------------------------------------------------------
 -- filter
 
-module _ {a p} {A : Set a} {P : A → Set p} (P? : Decidable P) where
+module _ {P : Pred A p} (P? : Decidable P) where
 
   filter⁺ : ∀ xs → filter P? xs ⊆ xs
   filter⁺ = Setoidₚ.filter⁺ (setoid A) P?
@@ -195,8 +197,7 @@ module _ {a p} {A : Set a} {P : A → Set p} (P? : Decidable P) where
 
 -- Version 0.16
 
-boolFilter-⊆ : ∀ {a} {A : Set a} (p : A → Bool) →
-               (xs : List A) → boolFilter p xs ⊆ xs
+boolFilter-⊆ : ∀ (p : A → Bool) (xs : List A) → boolFilter p xs ⊆ xs
 boolFilter-⊆ p (x ∷ xs) with p x | boolFilter-⊆ p xs
 ... | false | hyp = there ∘ hyp
 ... | true  | hyp =

@@ -30,9 +30,13 @@ open SetoidEquality S
 ------------------------------------------------------------------------
 -- Definition
 
-infix 4 _⊆_
+infix 4 _⊆_ _⊇_
+
 _⊆_ : Rel (List A) (c ⊔ ℓ)
 _⊆_ = Heterogeneous.Sublist _≈_
+
+_⊇_ : Rel (List A) (c ⊔ ℓ)
+xs ⊇ ys = ys ⊆ xs
 
 ------------------------------------------------------------------------
 -- Re-export definitions and operations from heterogeneous sublists

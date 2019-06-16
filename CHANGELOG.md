@@ -273,6 +273,11 @@ been attached to all deprecated names.
 
 * In `Data.Fin.Properties` the operator `_+′_` has been deprecated.
 
+* In `Data.List.Relation.Binary.Sublist.Propositional.Properties`:
+  ```agda
+  All-resp-⊆  ↦  All-resp-⊇
+  ```
+
 * In `Data.Nat.Divisibility`:
   ```agda
   poset   ↦  ∣-poset
@@ -552,6 +557,15 @@ Other minor additions
 * Added new proof to `Data.List.Relation.Binary.Sublist.Heterogeneous.Properties`:
   ```agda
   concat⁺ : Sublist (Sublist R) ass bss → Sublist R (concat ass) (concat bss)
+  ```
+
+* Added new proof to `Data.List.Relation.Binary.Sublist.Setoid.Properties`:
+  ```agda
+  Any-resp-⊆      : P Respects  _≈_ → (Any P) Respects _⊆_
+  All-resp-⊇      : P Respects  _≈_ → (All P) Respects _⊇_
+  AllPairs-resp-⊇ : R Respects₂ _≈_ → (AllPairs R) Respects _⊇_
+  ∈-resp-⊆        : ∀ {v} → (v ∈_) Respects _⊆_
+  Unique-resp-⊇   : Unique Respects _⊇_
   ```
 
 * Added new proof to `Data.List.Membership.Setoid.Properties`:
@@ -843,6 +857,7 @@ Other minor additions
 * Added new proof to `Relation.Binary.PropositionalEquality.Core`:
   ```agda
   ≢-sym : Symmetric _≢_
+  resp  : P Respects _≡_
   ```
 
 * Added new proofs to `Relation.Nullary.Construct.Add.Point`:

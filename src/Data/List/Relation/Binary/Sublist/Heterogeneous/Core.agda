@@ -10,8 +10,8 @@
 open import Relation.Binary using (REL)
 
 module Data.List.Relation.Binary.Sublist.Heterogeneous.Core
-       {a b r} {A : Set a} {B : Set b} (R : REL A B r)
-       where
+  {a b r} {A : Set a} {B : Set b} (R : REL A B r)
+  where
 
 open import Level using (_⊔_)
 open import Data.List.Base using (List; []; _∷_; [_])
