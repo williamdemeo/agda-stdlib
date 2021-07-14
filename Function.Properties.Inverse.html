@@ -1,0 +1,46 @@
+<!DOCTYPE HTML>
+<html><head><meta charset="utf-8"><title>Function.Properties.Inverse</title><link rel="stylesheet" href="Agda.css"></head><body><pre class="Agda"><a id="1" class="Comment">------------------------------------------------------------------------</a>
+<a id="74" class="Comment">-- The Agda standard library</a>
+<a id="103" class="Comment">--</a>
+<a id="106" class="Comment">-- Some functional properties are Equivalence Relations</a>
+<a id="162" class="Comment">--   This file is meant to be imported qualified.</a>
+<a id="212" class="Comment">------------------------------------------------------------------------</a>
+
+<a id="286" class="Symbol">{-#</a> <a id="290" class="Keyword">OPTIONS</a> <a id="298" class="Pragma">--without-K</a> <a id="310" class="Pragma">--safe</a> <a id="317" class="Symbol">#-}</a>
+
+<a id="322" class="Keyword">module</a> <a id="329" href="Function.Properties.Inverse.html" class="Module">Function.Properties.Inverse</a> <a id="357" class="Keyword">where</a>
+
+<a id="364" class="Keyword">open</a> <a id="369" class="Keyword">import</a> <a id="376" href="Function.Bundles.html" class="Module">Function.Bundles</a> <a id="393" class="Keyword">using</a> <a id="399" class="Symbol">(</a><a id="400" href="Function.Bundles.html#5792" class="Record">Inverse</a><a id="407" class="Symbol">;</a> <a id="409" href="Function.Bundles.html#8810" class="Function Operator">_↔_</a><a id="412" class="Symbol">)</a>
+<a id="414" class="Keyword">open</a> <a id="419" class="Keyword">import</a> <a id="426" href="Level.html" class="Module">Level</a> <a id="432" class="Keyword">using</a> <a id="438" class="Symbol">(</a><a id="439" href="Agda.Primitive.html#597" class="Postulate">Level</a><a id="444" class="Symbol">)</a>
+<a id="446" class="Keyword">open</a> <a id="451" class="Keyword">import</a> <a id="458" href="Relation.Binary.html" class="Module">Relation.Binary</a> <a id="474" class="Keyword">using</a> <a id="480" class="Symbol">(</a><a id="481" href="Relation.Binary.Bundles.html#1009" class="Record">Setoid</a><a id="487" class="Symbol">;</a> <a id="489" href="Relation.Binary.Structures.html#1522" class="Record">IsEquivalence</a><a id="502" class="Symbol">)</a>
+<a id="504" class="Keyword">import</a> <a id="511" href="Relation.Binary.PropositionalEquality.html" class="Module">Relation.Binary.PropositionalEquality</a> <a id="549" class="Symbol">as</a> <a id="552" class="Module">P</a>
+
+<a id="555" class="Keyword">import</a> <a id="562" href="Function.Construct.Identity.html" class="Module">Function.Construct.Identity</a> <a id="590" class="Symbol">as</a> <a id="593" class="Module">Identity</a>
+<a id="602" class="Keyword">import</a> <a id="609" href="Function.Construct.Symmetry.html" class="Module">Function.Construct.Symmetry</a> <a id="637" class="Symbol">as</a> <a id="640" class="Module">Symmetry</a>
+<a id="649" class="Keyword">import</a> <a id="656" href="Function.Construct.Composition.html" class="Module">Function.Construct.Composition</a> <a id="687" class="Symbol">as</a> <a id="690" class="Module">Composition</a>
+
+<a id="703" class="Keyword">private</a>
+  <a id="713" class="Keyword">variable</a>
+    <a id="726" href="Function.Properties.Inverse.html#726" class="Generalizable">a</a> <a id="728" href="Function.Properties.Inverse.html#728" class="Generalizable">ℓ</a> <a id="730" class="Symbol">:</a> <a id="732" href="Agda.Primitive.html#597" class="Postulate">Level</a>
+
+<a id="739" class="Comment">------------------------------------------------------------------------</a>
+<a id="812" class="Comment">-- Setoid bundles</a>
+
+<a id="isEquivalence"></a><a id="831" href="Function.Properties.Inverse.html#831" class="Function">isEquivalence</a> <a id="845" class="Symbol">:</a> <a id="847" href="Relation.Binary.Structures.html#1522" class="Record">IsEquivalence</a> <a id="861" class="Symbol">(</a><a id="862" href="Function.Bundles.html#5792" class="Record">Inverse</a> <a id="870" class="Symbol">{</a><a id="871" href="Function.Properties.Inverse.html#726" class="Generalizable">a</a><a id="872" class="Symbol">}</a> <a id="874" class="Symbol">{</a><a id="875" href="Function.Properties.Inverse.html#728" class="Generalizable">ℓ</a><a id="876" class="Symbol">})</a>
+<a id="879" href="Function.Properties.Inverse.html#831" class="Function">isEquivalence</a> <a id="893" class="Symbol">=</a> <a id="895" class="Keyword">record</a>
+  <a id="904" class="Symbol">{</a> <a id="906" href="Relation.Binary.Structures.html#1568" class="Field">refl</a>  <a id="912" class="Symbol">=</a> <a id="914" class="Symbol">λ</a> <a id="916" class="Symbol">{</a><a id="917" href="Function.Properties.Inverse.html#917" class="Bound">x</a><a id="918" class="Symbol">}</a> <a id="920" class="Symbol">→</a> <a id="922" href="Function.Construct.Identity.html#3634" class="Function">Identity.inverse</a> <a id="939" href="Function.Properties.Inverse.html#917" class="Bound">x</a>
+  <a id="943" class="Symbol">;</a> <a id="945" href="Relation.Binary.Structures.html#1594" class="Field">sym</a>   <a id="951" class="Symbol">=</a> <a id="953" href="Function.Construct.Symmetry.html#5557" class="Function">Symmetry.inverse</a>
+  <a id="972" class="Symbol">;</a> <a id="974" href="Relation.Binary.Structures.html#1620" class="Field">trans</a> <a id="980" class="Symbol">=</a> <a id="982" href="Function.Construct.Composition.html#8137" class="Function">Composition.inverse</a>
+  <a id="1004" class="Symbol">}</a>
+
+<a id="1007" class="Comment">------------------------------------------------------------------------</a>
+<a id="1080" class="Comment">-- Propositional bundles</a>
+
+<a id="1106" class="Comment">-- need to η-expand for everything to line up properly</a>
+<a id="↔-isEquivalence"></a><a id="1161" href="Function.Properties.Inverse.html#1161" class="Function">↔-isEquivalence</a> <a id="1177" class="Symbol">:</a> <a id="1179" href="Relation.Binary.Structures.html#1522" class="Record">IsEquivalence</a> <a id="1193" class="Symbol">{</a><a id="1194" class="Argument">ℓ</a> <a id="1196" class="Symbol">=</a> <a id="1198" href="Function.Properties.Inverse.html#728" class="Generalizable">ℓ</a><a id="1199" class="Symbol">}</a> <a id="1201" href="Function.Bundles.html#8810" class="Function Operator">_↔_</a>
+<a id="1205" href="Function.Properties.Inverse.html#1161" class="Function">↔-isEquivalence</a> <a id="1221" class="Symbol">=</a> <a id="1223" class="Keyword">record</a>
+  <a id="1232" class="Symbol">{</a> <a id="1234" href="Relation.Binary.Structures.html#1568" class="Field">refl</a>  <a id="1240" class="Symbol">=</a> <a id="1242" class="Symbol">λ</a> <a id="1244" class="Symbol">{</a><a id="1245" href="Function.Properties.Inverse.html#1245" class="Bound">x</a><a id="1246" class="Symbol">}</a> <a id="1248" class="Symbol">→</a> <a id="1250" href="Function.Construct.Identity.html#3634" class="Function">Identity.inverse</a> <a id="1267" class="Symbol">(</a><a id="1268" href="Relation.Binary.PropositionalEquality.Properties.html#3972" class="Function">P.setoid</a> <a id="1277" href="Function.Properties.Inverse.html#1245" class="Bound">x</a><a id="1278" class="Symbol">)</a>
+  <a id="1282" class="Symbol">;</a> <a id="1284" href="Relation.Binary.Structures.html#1594" class="Field">sym</a>   <a id="1290" class="Symbol">=</a> <a id="1292" href="Function.Construct.Symmetry.html#5557" class="Function">Symmetry.inverse</a>
+  <a id="1311" class="Symbol">;</a> <a id="1313" href="Relation.Binary.Structures.html#1620" class="Field">trans</a> <a id="1319" class="Symbol">=</a> <a id="1321" href="Function.Construct.Composition.html#8137" class="Function">Composition.inverse</a>
+  <a id="1343" class="Symbol">}</a>
+</pre></body></html>
